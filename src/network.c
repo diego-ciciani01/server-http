@@ -23,7 +23,6 @@ static void networkSetError(char *err, const char *fmt, ...)
     va_end(ap);
 }
 
-
 /* The method help to interprete the '.' notation in string rapresenting string */
 void readAddr(struct sockaddr *addr, char *ipclient)
 {
@@ -35,11 +34,13 @@ void readAddr(struct sockaddr *addr, char *ipclient)
     inet_ntop(addr->sa_family, ipversion, ipclient, sizeof(ipclient));
 }
 
-/* This function create the file descriot for the socket */
+/* This function create the file descriot for the socket for IPv4 and IPv6.
+ * Provide the necessary error controlo for the fault of API call.
+ * */
 int networkTcpServer(char *err, char port, char *bindaddr)
 {
     /* Variable used to create and handle the socket */
-    int fd, rv;
+    int fd, rv, on=1;
     struct addrinfo infoSock, *res;
     char ipclient[INET6_ADDRSTRLEN];
 
@@ -57,8 +58,18 @@ int networkTcpServer(char *err, char port, char *bindaddr)
         close(fd);
         return NETWORK_ERR;
     }
+    /*  Set the reutilizzaztion of the socket in a time,
+     *  if you try to recall the server after a time of 1-2 min,
+     *  the bind call will fail saing 'Addres already in use'.
+     *  So for this reason we did, this API call.
+     * */
+    if ((setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, on, sizeof(on))) == -1){
+        networkSetError(err, "setsockopt SO_REUSEADDR: %s\n", strerror(errono));
+        close(fd);
+        return NETWORK_ERR;
+    }
 
-    if (!bindaddr){
+    if (bindaddr){
         networkSetError(err, "address not setted\n");
         return NETWORK_ERR;
     }
@@ -83,4 +94,12 @@ int networkTcpServer(char *err, char port, char *bindaddr)
 
 }
 
+int networkSend(char *err, int sockfd, void *buf)
+{
+    if (send(sockfd, buf, sizeof(buf), 0) == -1){
+        networkSetError(err, "send: %s\n", strerror(errno));
+        return  NETWORK_ERR;
+    }
 
+    return sockfd;
+}
