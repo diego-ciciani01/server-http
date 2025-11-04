@@ -3,7 +3,7 @@ PROGNAME = server-http
 CFLAGS = -Wall -g -I./src
 SRC_DIR = src
 OBJ_DIR = build
-
+TEST_DIR = test
 OBJ = $(SRC_DIR)/network.o $(SRC_DIR)/main.o $(SRC_DIR)/request.o
 
 #deps use the dep command to generate this
@@ -21,3 +21,7 @@ dep:
 
 clean:
 	rm -f $(PROGNAME) $(SRC_DIR)/*.o*.o
+
+test:
+	$(CC) -Wall -g -o test $(TEST_DIR)/network-test.c
+
