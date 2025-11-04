@@ -1,3 +1,6 @@
+#ifndef NETWORK_H
+#define NETWORK_H
+
 #define NETWORK_OK 0
 #define NETWORK_ERR -1
 #define NETWORK_ERR_LEN 256
@@ -11,3 +14,4 @@ int networkAccept(char *err, int sockfd, char *ip, char *port);
 int networkSend(char *err, int sockfd, void *buf);
 int networkRecv(char *err, int sockfd, void *buf);
 
+#endif

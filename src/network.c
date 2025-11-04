@@ -34,6 +34,64 @@ void readAddr(struct sockaddr *addr, char *ipclient)
     inet_ntop(addr->sa_family, ipversion, ipclient, sizeof(ipclient));
 }
 
+int networkAccept(char *err, int sockfd, char *ip, char *port)
+{
+    int fd;
+    struct sockaddr_storage their_addr;
+    socklen_t sin_size;
+
+    while(1){
+        sin_size = sizeof(their_addr);
+        fd = accept(sockfd, (struct sockaddr*)&their_addr, &sin_size);
+        if (fd == -1){
+            /* meening if the call, it been stopped from keyboard */
+            if (errno == EINTR)
+                continue;
+            else{
+                networkSetError(err, "accept %s\n", strerror(errno));
+                return NETWORK_ERR;
+            }
+        }
+        break;
+    }
+    if (ip) readAddr((struct sockaddr*)&their_addr, ip);
+    /* with htohs is possible to tonver the port number for the correct value in respet to the endianess */
+    if (port){
+        /* case of IPv4 */
+        if (their_addr.ss_family == AF_INET){
+            struct sockaddr_in *s =  (struct sockaddr_in *)&their_addr;
+            *port = ntohs(s->sin_port);
+        }
+        /* case of IPv6 */
+        if (their_addr.ss_family == AF_INET6){
+            struct sockaddr_in6 *s = (struct sockaddr_in6 *)&their_addr;
+            *port = ntohs(s->sin6_port);
+        }
+
+    }
+    return fd;
+}
+
+int networkSend(char *err, int sockfd, void *buf)
+{
+    if (send(sockfd, buf, sizeof(buf), 0) == -1){
+        networkSetError(err, "send: %s\n", strerror(errno));
+        return  NETWORK_ERR;
+    }
+
+    return sockfd;
+}
+
+int networkRecv(char *err, int sockfd, void *buf)
+{
+    int readbyte=0;
+    if((readbyte = recv(sockfd, buf, sizeof(buf), 0)) == -1 || readbyte == 0){
+        networkSetError(err, "recv: %s\n", strerror(errno));
+        return NETWORK_ERR;
+    }
+    return readbyte;
+}
+
 /* This function create the file descriot for the socket for IPv4 and IPv6.
  * Provide the necessary error controlo for the fault of API call.
  * */
@@ -63,8 +121,8 @@ int networkTcpServer(char *err, char port, char *bindaddr)
      *  the bind call will fail saing 'Addres already in use'.
      *  So for this reason we did, this API call.
      * */
-    if ((setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, on, sizeof(on))) == -1){
-        networkSetError(err, "setsockopt SO_REUSEADDR: %s\n", strerror(errono));
+    if ((setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &on, sizeof(on))) == -1){
+        networkSetError(err, "setsockopt SO_REUSEADDR: %s\n", strerror(errno));
         close(fd);
         return NETWORK_ERR;
     }
@@ -91,15 +149,6 @@ int networkTcpServer(char *err, char port, char *bindaddr)
     freeaddrinfo(res);
 
     return fd;
-
 }
 
-int networkSend(char *err, int sockfd, void *buf)
-{
-    if (send(sockfd, buf, sizeof(buf), 0) == -1){
-        networkSetError(err, "send: %s\n", strerror(errno));
-        return  NETWORK_ERR;
-    }
 
-    return sockfd;
-}

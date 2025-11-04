@@ -1,4 +1,4 @@
-#include "network.h"
+#include "../src/network.h"
 
 void launch(int sockfd)
 {
@@ -8,8 +8,6 @@ void launch(int sockfd)
         perror("acept");
         continue;
     }
-
-
 
 
 }
