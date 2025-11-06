@@ -1,6 +1,8 @@
 #ifndef REQUEST_HTTP
 #define REQUEST_HTTP
 
+#define HTTP_UNKNOWN -1
+
 enum httpMethod
 {
     POST,
@@ -22,6 +24,6 @@ typedef struct
 
 }httpRequest;
 
-httpRequest httpRequestConstructo(char *requestString);
+httpRequest *httpRequestConstructo(char *requestString);
 
 #endif
