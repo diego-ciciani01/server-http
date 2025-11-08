@@ -4,13 +4,12 @@
 #include "request.h"
 
 /* method to copy the pointed value in the new pointer*/
-char *copyString(char *str1, char *str2)
+void copyString(char *str1, char *str2)
 {
     int i;
     for(i=0; str1[i] != '\0'; i++)
         str2[i] = str1[i];
     str2[i] = '\0';
-    return str2;
 }
 
 int strLen(char *str)
@@ -48,33 +47,63 @@ int choseHttpMethod(char *method){
 
 }
 
+
+void extractHeaderFields(){
+
+}
+
+void extractBodyFields(){
+
+}
+
+void extractRequestLine(char *requestLine, httpRequest *httpRequest )
+{
+    char field[strLen(requestLine)];
+    copyString(requestLine, field);
+
+    char *method = strtok(field, " ");
+    char *URI = strtok(NULL, " ");
+    char *httpVersion = strtok(NULL, " ");
+
+    httpVersion->method = method;
+    httpVersion->URI = URI;
+    httpVersion->version = httpVersion;
+}
+
+
 /*  In this fanction we want to find the location in with the body part of the request begin.
  *  Finding the excape character, '\n'
  * */
 httpRequest *httpRequestConstructo(char *requestString)
 {
-    httpRequest *myrequest;
+    httpRequest *myrequest = NULL;
+    char myrequeststr[strLen(requestString)];
 
-    char *myrequeststr = copyString(requestString, myrequest);
-    for (int i =0; i<(strLen(myrequest)-1), i++){
-        if (myrequeststr[i] == '\n' && myrequeststr[i+1] == '\n'){
+    copyString(requestString, myrequeststr);
+
+    for (int i =0; i<(strLen(myrequeststr)-2); i++) {
+        if (myrequeststr[i] == '\n' && myrequeststr[i+1] == '\n')
             myrequeststr[i+1] = '|';
-        }
+
     }
+    /* Extract the main part from the request */
     char *requestline =  strtok(myrequeststr, "\n");
-    char *headerfilds = strtok(NULL, '|');
-    char *body = strtok(NULL, '|');
+    char *headerfilds = strtok(NULL, "|");
+    char *body = strtok(NULL, "|");
+
+    extractRequestLine(requestline, myrequest);
 
     /* Separate the request line now */
-    char *requestmethod = strtok(request, ' ');
-    myrequest->method = choseHttpMethod(requestmethod);
-    char *URI = strtok(NULL, ' ');
-    myrequest->URI = URI;
-    char *httpVersion = strtok(NULL, ' ');
-    httpVersion = strtok(httpVersion, '/');
-    httpVersion = strtok(NULL, '/');
-    myrequest->httpVersion = (float)atof(httpVersion);
-
+    /*
+        char *requestmethod = strtok(requestline, " ");
+        myrequest->method = choseHttpMethod(requestmethod);
+        char *URI = strtok(NULL, " ");
+        myrequest->URI = URI;
+        char *httpVersion = strtok(NULL, " ");
+        httpVersion = strtok(httpVersion, "/");
+        httpVersion = strtok(NULL, "/");
+        myrequest->httpVersion = (float)atof(httpVersion);
+    */
     return myrequest;
-
 }
+

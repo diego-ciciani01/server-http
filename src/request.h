@@ -9,10 +9,11 @@ enum httpMethod
     GET,
     PUT,
     HEAD,
-    DELATE,
+    DELETE,
     UPDATE,
     CONNECT,
     OPTIONS,
+    PATCH,
     TRACE
 };
 
