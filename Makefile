@@ -11,7 +11,7 @@ OBJ = $(SRC_DIR)/network.o $(SRC_DIR)/main.o $(SRC_DIR)/request.o $(SRC_DIR)/dat
 #deps use the dep command to generate this
 main.o: $(SRC_DIR)/main.c $(SRC_DIR)/request.h $(SRC_DIR)/network.h
 request.o: $(SRC_DIR)/request.c $(SRC_DIR)/request.h
-network.o: $(SRC_DIR)/network.c $(SRC_DIR)/network.c
+network.o: $(SRC_DIR)/network.c $(SRC_DIR)/network.h
 test.o: $(TEST_DIR)/network-test.c
 malloc_utils.o: $(SRC_DIR)/malloc-utils/malloc_utils.c $(SRC_DIR)/malloc-utils/malloc_utils.h
 queue.o: $(SRC_DIR)/data-struct/queue.c $(SRC_DIR)/data-struct/queue.h $(SRC_DIR)/data-struct/linkedList.h $(SRC_DIR)/malloc-utils/malloc_utils.h
