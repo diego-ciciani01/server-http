@@ -3,6 +3,8 @@
 
 #define HTTP_UNKNOWN -1
 
+#include "data-struct/dictionary.h"
+#include "data-struct/queue.h"
 enum httpMethod
 {
     POST,
@@ -19,12 +21,17 @@ enum httpMethod
 
 typedef struct
 {
-    int method;
-    char *URI;
-    float httpVersion;
+   dict *requestline;
+   dict *headerfields;
+   dict *body;
 
 }httpRequest;
 
 httpRequest *httpRequestConstructo(char *requestString);
-
+void copyString(char *str1, char *str2);
+int strlen(char *str);
+int choseHttpMethod(char *method);
+void extractRequestLine(char *requestLine, httpRequest *httpRequest);
+void extractHeaderFields(httpRequest *httpRequest, char *headerField);
+void extractBodyField(httpRequest *httpRequest, char *bodyField);
 #endif

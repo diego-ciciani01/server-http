@@ -2,8 +2,8 @@
 #include <string.h>
 
 #include "request.h"
-
-/* method to copy the pointed value in the new pointer*/
+#include ""
+/* Method to copy the pointed value in the new pointer*/
 void copyString(char *str1, char *str2)
 {
     int i;
@@ -12,6 +12,7 @@ void copyString(char *str1, char *str2)
     str2[i] = '\0';
 }
 
+/* Fethod to evaluate the str len*/
 int strLen(char *str)
 {
     int len;
@@ -20,8 +21,9 @@ int strLen(char *str)
     return len;
 }
 
-int choseHttpMethod(char *method){
-
+/* Function to switch on different data return */
+int choseHttpMethod(char *method)
+{
     if (strcmp(method, "GET") == 0)
             return GET;
     else if (strcmp(method, "POST") == 0)
@@ -44,19 +46,46 @@ int choseHttpMethod(char *method){
         printf("ERROR: method %s not found\n", method);
         return HTTP_UNKNOWN;
     }
-
 }
 
+/* Extract the header fild data */
+void extractHeaderFields(httpRequest *httpRequest, char *headerFild)
+{
+    char field[strLen(headerFild)];
+    copyString(headerFild, field);
 
-void extractHeaderFields(){
+    queue *headers = createQueue(*headers);
+    char *field = strtok(headerfilds, "\n");
 
+    while(field){
+        header->push(header, field);
+        field = strtok(NULL, "\n");
+    }
+    dict *headerdict = createDictionary(10);
+
+    do{
+        char *header = (char*)headers.peak(headers);
+
+        char *key = strtok(header, ":");
+        char *value = strtok(NULL, "\n");
+        /*remove some space */
+        if(value){
+            if (value[0] == ' ') value++;
+            addItem(headerdict, key, value);
+        }
+            headers->pop(headers);
+
+    }while(header);
+
+    queueDestruction(q);
+}
+/* extracrt the body fild, but only if the contente_type key is presente on the dict */
+void extractBodyField(httpRequest *httpRequest, char *bodyField)
+{
+    if (httpRequest->header->)
 }
 
-void extractBodyFields(){
-
-}
-
-void extractRequestLine(char *requestLine, httpRequest *httpRequest )
+void extractRequestLine(char *requestLine, httpRequest *httpRequest)
 {
     char field[strLen(requestLine)];
     copyString(requestLine, field);
@@ -64,12 +93,13 @@ void extractRequestLine(char *requestLine, httpRequest *httpRequest )
     char *method = strtok(field, " ");
     char *URI = strtok(NULL, " ");
     char *httpVersion = strtok(NULL, " ");
+    dict *request =  createDictionary(10);
+    addItem(request, "method", method, 1 );
+    addItem(request, "URI", URI, 1);
+    addItem(request, "version", httpVersion, 1);
 
-    httpVersion->method = method;
-    httpVersion->URI = URI;
-    httpVersion->version = httpVersion;
+    httpRequest->requestline = request;
 }
-
 
 /*  In this fanction we want to find the location in with the body part of the request begin.
  *  Finding the excape character, '\n'
@@ -84,7 +114,6 @@ httpRequest *httpRequestConstructo(char *requestString)
     for (int i =0; i<(strLen(myrequeststr)-2); i++) {
         if (myrequeststr[i] == '\n' && myrequeststr[i+1] == '\n')
             myrequeststr[i+1] = '|';
-
     }
     /* Extract the main part from the request */
     char *requestline =  strtok(myrequeststr, "\n");

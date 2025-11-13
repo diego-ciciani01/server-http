@@ -41,4 +41,6 @@ uint64_t fnv1Hash(const unsigned char *data, size_t len);
 unsigned short compareGenericKey(const generickey *key1, const generickey *key2);
 void deleteItem(dict *dict, entry *entry);
 void destructDict(dict *dict);
+void *searchKey(dict *dict, void *key);
+
 #endif

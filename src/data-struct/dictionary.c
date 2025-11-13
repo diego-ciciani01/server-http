@@ -65,7 +65,7 @@ void addItem(dict *dict, void *key, void *value, short TYPE)
     uint64_t hashposition = genericHashFunction(dict, generickey);
     myentry = dict->bucket[hashposition];
 
-    while(myentry != NULL){
+    while (myentry != NULL){
         if (compareGenericKey(myentry->key, generickey)) {
             free(myentry->data);
             myentry->data = value;
@@ -110,7 +110,7 @@ void deleteItem(dict *dict, void *key, short TYPE)
     uint64_t index = genericHashFunction(dict, key);
     node = dict->bucket[index];
 
-    while(node != NULL) {
+    while (node != NULL) {
         if (compareGenericKey(node, key)) {
            myentrysup = node;
            node = myentrysup->next;
@@ -137,7 +137,7 @@ void deleteItem(dict *dict)
     generickey *node, *current;
     for (int i=0; dict->len; i++){
         if(node = dict->bucket[i] != NULL){
-            while(node != NULL){
+            while (node != NULL){
                 current = node;
                 free(current->key);
                 free(current->value);
@@ -145,6 +145,28 @@ void deleteItem(dict *dict)
                 node=node->next;
             }
         }
+    }
+    return;
+}
+
+void *searchKey(dict *dict, void *key)
+{
+    entry *wrapkey, *node;
+
+    uint64_t index = fnv1Hash((const unsigned char *) key, sizeof(key));
+    node = dict->bucket[index];
+    wrapkey->keydata->strval = (char *)key;
+    wrapkey->type = TYPE_STRING;
+
+    while (node != NULL){
+
+        if (compareGenericKey(node->key, wrapkey))
+            return node->data;
+        else{
+            printf("key not found\n");
+            return;
+        }
+        node = node->next;
     }
     return;
 }
