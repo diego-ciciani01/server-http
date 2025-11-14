@@ -50,6 +50,9 @@ void addItem(dict *dict, void *key, void *value, short TYPE)
 {
     generickey *generickey;
     entry *myentry, *node;
+
+    generickey = safeMalloc(sizeof(*generickey));
+
     if (TYPE == TYPE_STRING){
         generickey->type = TYPE_STRING;
         generickey->data->strval = (char*)key;
@@ -94,7 +97,12 @@ dict *createDictionary(size_t size)
 void deleteItem(dict *dict, void *key, short TYPE)
 {
     if (dict == NULL) return;
-    generickey *key, *node, *myentrysup;
+
+    generickey *generickey;
+    entry *node, *myentrysup;
+
+    generickey = safeMalloc(sizeof(*generickey));
+
     if (TYPE == TYPE_STRING){
         generickey->type = TYPE_STRING;
         generickey->data->strval = (char*)key;
@@ -111,19 +119,19 @@ void deleteItem(dict *dict, void *key, short TYPE)
     node = dict->bucket[index];
 
     while (node != NULL) {
-        if (compareGenericKey(node, key)) {
+         if (compareGenericKey(node->key, generickey)) {
            myentrysup = node;
            node = myentrysup->next;
-           free(myentrysup->value);
+           free(myentrysup->data);
            free(myentrysup->key);
            free(myentrysup);
             return;
         }
-        if (node->next != NULL && compareGenericKey(node->next, key)){
+        if (node->next != NULL && compareGenericKey(node->next->key, key)){
             myentrysup = node->next;
             node = myentrysup->next;
             free(myentrysup->key);
-            free(myentrysup->value);
+            free(myentrysup->data);
             free(myentrysup);
             return;
         }
@@ -132,41 +140,43 @@ void deleteItem(dict *dict, void *key, short TYPE)
     return;
 }
 
-void deleteItem(dict *dict)
+void destoyDict(dict *dict)
 {
-    generickey *node, *current;
+    entry *current, *node;
     for (int i=0; dict->len; i++){
-        if(node = dict->bucket[i] != NULL){
+        node = dict->bucket[i];
+        if((node != NULL)){
             while (node != NULL){
                 current = node;
                 free(current->key);
-                free(current->value);
+                free(current->data);
                 free(current);
                 node=node->next;
             }
         }
     }
+    free(dict);
     return;
 }
 
 void *searchKey(dict *dict, void *key)
 {
     entry *wrapkey, *node;
+    wrapkey = safeMalloc(sizeof(wrapkey));
 
     uint64_t index = fnv1Hash((const unsigned char *) key, sizeof(key));
     node = dict->bucket[index];
-    wrapkey->keydata->strval = (char *)key;
-    wrapkey->type = TYPE_STRING;
+    wrapkey->key->data->strval = (char *)key;
+    wrapkey->key->type = TYPE_STRING;
 
     while (node != NULL){
-
-        if (compareGenericKey(node->key, wrapkey))
+        if (compareGenericKey(node->key, wrapkey->key))
             return node->data;
         else{
             printf("key not found\n");
-            return;
+            return NULL;
         }
         node = node->next;
     }
-    return;
+    return NULL;
 }

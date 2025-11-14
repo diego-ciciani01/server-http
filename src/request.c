@@ -2,7 +2,7 @@
 #include <string.h>
 
 #include "request.h"
-#include ""
+
 /* Method to copy the pointed value in the new pointer*/
 void copyString(char *str1, char *str2)
 {
@@ -48,44 +48,77 @@ int choseHttpMethod(char *method)
     }
 }
 
-/* Extract the header fild data */
+/* Extract the header field data */
 void extractHeaderFields(httpRequest *httpRequest, char *headerFild)
 {
-    char field[strLen(headerFild)];
-    copyString(headerFild, field);
+    char fields[strLen(headerFild)], *field, *header, *key, *value;
+    queue *headers;
+    dict *headerdict;
 
-    queue *headers = createQueue(*headers);
-    char *field = strtok(headerfilds, "\n");
+    copyString(headerFild, fields);
 
+    headers = createQueue();
+    field = strtok(fields, "\n");
     while(field){
-        header->push(header, field);
+        headers->push(headers, field);
         field = strtok(NULL, "\n");
     }
-    dict *headerdict = createDictionary(10);
+    headerdict = createDictionary(10);
 
     do{
-        char *header = (char*)headers.peak(headers);
+        header = (char*)headers->peak(headers);
 
-        char *key = strtok(header, ":");
-        char *value = strtok(NULL, "\n");
+        key = strtok(header, ":");
+        value = strtok(NULL, "\n");
         /*remove some space */
         if(value){
             if (value[0] == ' ') value++;
-            addItem(headerdict, key, value);
+            addItem(headerdict, key, value, TYPE_STRING);
         }
             headers->pop(headers);
 
     }while(header);
 
-    queueDestruction(q);
-}
-/* extracrt the body fild, but only if the contente_type key is presente on the dict */
-void extractBodyField(httpRequest *httpRequest, char *bodyField)
-{
-    if (httpRequest->header->)
+    queueDestruction(headers);
 }
 
-void extractRequestLine(char *requestLine, httpRequest *httpRequest)
+/* Extracrt the body fild, but only if the Content-Type key is presente on the dict */
+void extractBodyField(httpRequest *httpRequest, char *bodyField)
+{
+    char *bodydata, *key, *value, *field, *bodytype;
+    dict *bodydict;
+    queue *qbody;
+
+    if ((bodytype =searchKey(httpRequest->headerfields, "Content-Type"))){
+        bodydict = createDictionary(10);
+        if (strcmp(bodytype, "application/x-www-form-urlencoded") == 0){
+            qbody = createQueue();
+            /* Extract all the key - value from body and push on the queue */
+            field = strtok(bodyField, "&");
+            while(field){
+                qbody->push(qbody, field);
+                field = strtok(NULL, "&");
+            }
+            do{
+                bodydata = qbody->peak(qbody);
+                key = strtok(bodydata, "=");
+                value = strtok(NULL, "\0");
+
+                if(value) addItem(bodydict, key, value, TYPE_STRING);
+                qbody->pop(qbody);
+                bodydata = qbody->peak(qbody);
+            }while(bodydata);
+            queueDestruction(qbody);
+        }else{
+            addItem(bodydict, "all_data", bodyField, TYPE_STRING);
+
+        }
+        httpRequest->body = bodydict;
+    }
+
+}
+
+void extractRequestLine( httpRequest *httpRequest, char *requestLine)
 {
     char field[strLen(requestLine)];
     copyString(requestLine, field);
@@ -94,9 +127,9 @@ void extractRequestLine(char *requestLine, httpRequest *httpRequest)
     char *URI = strtok(NULL, " ");
     char *httpVersion = strtok(NULL, " ");
     dict *request =  createDictionary(10);
-    addItem(request, "method", method, 1 );
-    addItem(request, "URI", URI, 1);
-    addItem(request, "version", httpVersion, 1);
+    addItem(request, "method", method, TYPE_STRING);
+    addItem(request, "URI", URI, TYPE_STRING);
+    addItem(request, "version", httpVersion, TYPE_STRING);
 
     httpRequest->requestline = request;
 }
@@ -120,8 +153,9 @@ httpRequest *httpRequestConstructo(char *requestString)
     char *headerfilds = strtok(NULL, "|");
     char *body = strtok(NULL, "|");
 
-    extractRequestLine(requestline, myrequest);
-
+    extractRequestLine(myrequest, requestline);
+    extractHeaderFields(myrequest, headerfilds);
+    extractBodyField(myrequest, body);
     /* Separate the request line now */
     /*
         char *requestmethod = strtok(requestline, " ");

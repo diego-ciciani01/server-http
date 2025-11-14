@@ -29,9 +29,9 @@ typedef struct
 
 httpRequest *httpRequestConstructo(char *requestString);
 void copyString(char *str1, char *str2);
-int strlen(char *str);
+int strLen(char *str);
 int choseHttpMethod(char *method);
-void extractRequestLine(char *requestLine, httpRequest *httpRequest);
+void extractRequestLine(httpRequest *httpRequest, char *requestLine);
 void extractHeaderFields(httpRequest *httpRequest, char *headerField);
 void extractBodyField(httpRequest *httpRequest, char *bodyField);
 #endif

@@ -4,6 +4,8 @@
 #define EQUAL 1
 #define NOT_EQUAL 0
 
+#include <stdint.h>
+
 /* string and int for datatype */
 typedef enum{
     TYPE_STRING,
@@ -16,7 +18,7 @@ typedef union{
     char *strval;
 }keydata;
 
-/* defined type */
+/* Defined type */
 typedef struct{
     keytype type;
     keydata *data;
@@ -39,8 +41,8 @@ void addItem(dict *dict, void *key, void *value, short TYPE);
 uint64_t genericHashFunction(dict *dict, generickey *key);
 uint64_t fnv1Hash(const unsigned char *data, size_t len);
 unsigned short compareGenericKey(const generickey *key1, const generickey *key2);
-void deleteItem(dict *dict, entry *entry);
-void destructDict(dict *dict);
+void deleteItem(dict *dict, void *entry, short TYPE);
+void destroyDict(dict *dict);
 void *searchKey(dict *dict, void *key);
 
 #endif
