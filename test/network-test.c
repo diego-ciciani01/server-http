@@ -1,17 +1,11 @@
 #include "../src/network.h"
 
-void launch(int sockfd)
+void launch(char *err, int sockfd, char *port)
 {
-    struct sockaddr_storage client_test;
+    struct sockaddr_storage clientiptest;
     printf("================= WAITING FOR CONNECTION ================\n");
-    if(accept(sockfd, (struct sockaddr*) &client_test, sizeof(client_test)) == -1){
-        perror("acept");
-        continue;
-    }
-
-
+    networkAccept(err, sockfd, &clientiptest, port);
 }
-
 
 int main(void)
 {

@@ -150,5 +150,3 @@ int networkTcpServer(char *err, char port, char *bindaddr)
 
     return fd;
 }
-
-
