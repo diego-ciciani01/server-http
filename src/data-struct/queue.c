@@ -28,4 +28,9 @@ queue *createQueue(void)
     return q;
 }
 
+void queueDestruction(queue *q)
+{
+    listDestruction(q->list);
+    free(q);
+}
 

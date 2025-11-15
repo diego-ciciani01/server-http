@@ -31,6 +31,7 @@ listNode *getNextNode(listIter *iter);
 void listReleaseIterator(listIter *iter);
 void listDelNode(list *list, listNode *node);
 void listDelOnIndex(list *list, int index);
+void listDestruction(list *list);
 
 /* Some useful macro */
 #define listLength(l) ((l)->len)

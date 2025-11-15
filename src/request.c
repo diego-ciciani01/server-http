@@ -115,7 +115,6 @@ void extractBodyField(httpRequest *httpRequest, char *bodyField)
         }
         httpRequest->body = bodydict;
     }
-
 }
 
 void extractRequestLine( httpRequest *httpRequest, char *requestLine)
@@ -156,17 +155,6 @@ httpRequest *httpRequestConstructo(char *requestString)
     extractRequestLine(myrequest, requestline);
     extractHeaderFields(myrequest, headerfilds);
     extractBodyField(myrequest, body);
-    /* Separate the request line now */
-    /*
-        char *requestmethod = strtok(requestline, " ");
-        myrequest->method = choseHttpMethod(requestmethod);
-        char *URI = strtok(NULL, " ");
-        myrequest->URI = URI;
-        char *httpVersion = strtok(NULL, " ");
-        httpVersion = strtok(httpVersion, "/");
-        httpVersion = strtok(NULL, "/");
-        myrequest->httpVersion = (float)atof(httpVersion);
-    */
     return myrequest;
 }
 

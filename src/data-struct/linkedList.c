@@ -3,6 +3,8 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+
+/* Init the pointer of list */
 list *inizializeLinkedList(void)
 {
     list *list = safeMalloc(sizeof(*list));
@@ -52,7 +54,7 @@ list *addInTail(list *list, void *data)
     return list;
 }
 
-listIter *returnGetIterator(list *list, int direction)
+listIter *listGetIterator(list *list, int direction)
 {
     listIter *iter;
     iter = safeMalloc(sizeof(*iter));
@@ -122,4 +124,24 @@ void listDelOnIndex(list *list, int index)
     }
 
     listDelNode(list, node);
+}
+
+/* List destruction */
+void listDestruction(list *list)
+{
+    listNode *current, *temp;
+
+    if (list != NULL){
+        current = list->head;
+        while(current != NULL){
+            temp = current->next;
+            current = current->next;
+            free(temp);
+         }
+        free(list);
+        return;
+    }else{
+        printf("ERROR: list empdy\n");
+        return;
+    }
 }
