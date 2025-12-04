@@ -34,7 +34,7 @@ void readAddr(struct sockaddr *addr, char *ipclient)
     inet_ntop(addr->sa_family, ipversion, ipclient, sizeof(ipclient));
 }
 
-int networkAccept(char *err, int sockfd, char *ip, char *port)
+int networkAccept(char *err, int sockfd, char *ip, int *port)
 {
     int fd;
     struct sockaddr_storage their_addr;
@@ -72,9 +72,9 @@ int networkAccept(char *err, int sockfd, char *ip, char *port)
     return fd;
 }
 
-int networkSend(char *err, int sockfd, void *buf)
+int networkSend(char *err, int sockfd, void *buf, size_t len)
 {
-    if (send(sockfd, buf, sizeof(buf), 0) == -1){
+    if (send(sockfd, buf, len, 0) == -1){
         networkSetError(err, "send: %s\n", strerror(errno));
         return  NETWORK_ERR;
     }
@@ -82,10 +82,10 @@ int networkSend(char *err, int sockfd, void *buf)
     return sockfd;
 }
 
-int networkRecv(char *err, int sockfd, void *buf)
+int networkRecv(char *err, int sockfd, void *buf, size_t len)
 {
     int readbyte=0;
-    if((readbyte = recv(sockfd, buf, sizeof(buf), 0)) == -1 || readbyte == 0){
+    if((readbyte = recv(sockfd, buf, len, 0)) == -1 || readbyte == 0){
         networkSetError(err, "recv: %s\n", strerror(errno));
         return NETWORK_ERR;
     }
@@ -95,7 +95,7 @@ int networkRecv(char *err, int sockfd, void *buf)
 /* This function create the file descriot for the socket for IPv4 and IPv6.
  * Provide the necessary error controlo for the fault of API call.
  * */
-int networkTcpServer(char *err, char port, char *bindaddr)
+int networkTcpServer(char *err, const char *port, char *bindaddr)
 {
     /* Variable used to create and handle the socket */
     int fd, rv, on=1;
@@ -106,7 +106,7 @@ int networkTcpServer(char *err, char port, char *bindaddr)
     infoSock.ai_family = AF_INET;  /* IPv4 if you want IPv6, subsituite with AF_INET6 */
     infoSock.ai_socktype = SOCK_STREAM;
 
-    if ((rv = getaddrinfo(NULL, &port, &infoSock, &res) == -1)){
+    if ((rv = getaddrinfo(NULL, port, &infoSock, &res) == -1)){
         networkSetError(err, "getaddressinfo: %s\n", gai_strerror(rv));
         return NETWORK_ERR;
     }
@@ -126,11 +126,12 @@ int networkTcpServer(char *err, char port, char *bindaddr)
         close(fd);
         return NETWORK_ERR;
     }
-
+    /*
     if (bindaddr){
         networkSetError(err, "address not setted\n");
         return NETWORK_ERR;
     }
+    */
 
     if (bind(fd, res->ai_addr, res->ai_addrlen) == -1){
         networkSetError(err, "bind: %s\n", strerror(errno));
