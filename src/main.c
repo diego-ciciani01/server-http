@@ -37,7 +37,7 @@ static struct httpServer server;
 
 
 /* ========================================= Utility Function ================================= */
-/* This function is wrap som out of memory error */
+/* This function is wrap some out of memory error */
 static void oom(const char *msg)
 {
     fprintf(stderr, "%s: out of memory\n", msg);
@@ -45,7 +45,6 @@ static void oom(const char *msg)
     sleep(1);
     abort();
 }
-
 
 static void serverLogs( int level,  const char *fmt, ...)
 {
@@ -86,6 +85,7 @@ static void acceptHandler(int fd)
 {
     int cport, cfd;
     char cip[128];
+
     cfd = networkAccept(server.neterr, fd, cip, &cport);
     if (cfd == ERR) {
         serverLogs(DEBBUG, "Accepting client connection: %s", server.neterr);
