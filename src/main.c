@@ -51,7 +51,7 @@ static void serverLogs( int level,  const char *fmt, ...)
     va_list ap;
 
     va_start(ap, fmt);
-    if(level > 0){
+    if(level >= 0 && level <=2){
         char *c = ".-*";
         fprintf(stdout,"%c ",c[level]);
         vfprintf(stdout, fmt, ap);
@@ -88,16 +88,17 @@ static void acceptHandler(int fd)
 
     cfd = networkAccept(server.neterr, fd, cip, &cport);
     if (cfd == ERR) {
-        serverLogs(DEBBUG, "Accepting client connection: %s", server.neterr);
+        serverLogs(DEBBUG, "Accepting client connection: %s ", server.neterr);
         return;
     }
-    serverLogs(DEBBUG, "Accepted  %s:%d", cip, cport);
+    serverLogs(DEBBUG, "Accepted  %s:%d ", cip, cport);
 
 }
 
 int main(void){
     initServer();
-    acceptHandler(server.fd);
+    while(1)
+        acceptHandler(server.fd);
 
     return 0;
 }

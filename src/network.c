@@ -31,7 +31,7 @@ void readAddr(struct sockaddr *addr, char *ipclient)
     if (addr->sa_family == AF_INET)  ipversion = &((struct sockaddr_in*)addr)->sin_addr;
     if (addr->sa_family == AF_INET6) ipversion = &((struct sockaddr_in6*)addr)->sin6_addr;
 
-    inet_ntop(addr->sa_family, ipversion, ipclient, sizeof(ipclient));
+    inet_ntop(addr->sa_family, ipversion, ipclient, INET6_ADDRSTRLEN);
 }
 
 int networkAccept(char *err, int sockfd, char *ip, int *port)
@@ -39,12 +39,12 @@ int networkAccept(char *err, int sockfd, char *ip, int *port)
     int fd;
     struct sockaddr_storage their_addr;
     socklen_t sin_size;
-
+    /* This loop is used to retry connection in fall case */
     while(1){
         sin_size = sizeof(their_addr);
         fd = accept(sockfd, (struct sockaddr*)&their_addr, &sin_size);
         if (fd == -1){
-            /* meening if the call, it been stopped from keyboard */
+            /* Meening if the call, it been stopped from keyboard */
             if (errno == EINTR)
                 continue;
             else{
@@ -54,9 +54,9 @@ int networkAccept(char *err, int sockfd, char *ip, int *port)
         }
         break;
     }
-    if (ip) readAddr((struct sockaddr*)&their_addr, ip);
+    if (ip == NULL) readAddr((struct sockaddr*)&their_addr, ip);
     /* with htohs is possible to tonver the port number for the correct value in respet to the endianess */
-    if (port){
+    if (port == NULL){
         /* case of IPv4 */
         if (their_addr.ss_family == AF_INET){
             struct sockaddr_in *s =  (struct sockaddr_in *)&their_addr;
@@ -145,9 +145,9 @@ int networkTcpServer(char *err, const char *port, char *bindaddr)
         return NETWORK_ERR;
     }
 
-    readAddr(res->ai_addr, ipclient);
-    printf("the listen addres is %s\n",ipclient);
-    freeaddrinfo(res);
+    // readAddr(res->ai_addr, ipclient);
+    // printf("the listen addres is %s\n",ipclient);
+    // freeaddrinfo(res);
 
     return fd;
 }

@@ -6,7 +6,7 @@ set port 6700
 
 puts "tring test connection to $host:$port ..."
 
-after 500
+after 5000
 
 if { [catch {set sock  [socket $host $port]} err] } {
     puts "Errore: $err"
@@ -16,7 +16,7 @@ if { [catch {set sock  [socket $host $port]} err] } {
 if {$tcl_platform(platform) == "unix"} {
     puts "Closing the server pids"
     if { [catch {exec kill $serverPid} msg] } {
-    puts "Impossible to kill the server, errore in the code in happened"
+    puts "Impossible to kill the server, error in the code is happened"
     } else {
         puts "Server ended."
     }
