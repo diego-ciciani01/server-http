@@ -7,11 +7,11 @@
 
 #define BACKLOG 5
 
-int networkTcpServer(char *err, char port, char *bindaddr);
+int networkTcpServer(char *err, const char *port, char *bindaddr);
 static void networkSetError(char *err, const char *fmt, ...);
 void readAddr(struct sockaddr *addr, char *ipclient);
-int networkAccept(char *err, int sockfd, char *ip, char *port);
-int networkSend(char *err, int sockfd, void *buf);
-int networkRecv(char *err, int sockfd, void *buf);
+int networkAccept(char *err, int sockfd, char *ip, int *port);
+int networkSend(char *err, int sockfd, void *buf, size_t len);
+int networkRecv(char *err, int sockfd, void *buf, size_t len);
 
 #endif
