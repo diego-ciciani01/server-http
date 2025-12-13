@@ -19,7 +19,7 @@ linkedList.o: $(SRC_DIR)/data-struct/linkedList.c $(SRC_DIR)/data-struct/linkedL
 malloc_utils.o: $(SRC_DIR)/malloc-utils/malloc_utils.c $(SRC_DIR)/malloc-utils/malloc_utils.h
 dictionary.o: $(SRC_DIR)/data-struct/dictionary.c $(SRC_DIR)/data-struct/dictionary.h $(SRC_DIR)/data-struc ../malloc-utils/malloc_utils.h
 
-all:
+all: server-http
 server-http: $(OBJ)
 	$(CC) $(CFLAGS) -o	$(PROGNAME) $(OBJ)
 

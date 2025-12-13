@@ -54,7 +54,7 @@ int networkAccept(char *err, int sockfd, char *ip, int *port)
         }
         break;
     }
-    if (ip == NULL) readAddr((struct sockaddr*)&their_addr, ip);
+    if (ip) readAddr((struct sockaddr*)&their_addr, ip);
     /* with htohs is possible to tonver the port number for the correct value in respet to the endianess */
     if (port == NULL){
         /* case of IPv4 */
@@ -100,7 +100,6 @@ int networkTcpServer(char *err, const char *port, char *bindaddr)
     /* Variable used to create and handle the socket */
     int fd, rv, on=1;
     struct addrinfo infoSock, *res;
-    char ipclient[INET6_ADDRSTRLEN];
 
     memset(&infoSock, 0, sizeof(infoSock));
     infoSock.ai_family = AF_INET;  /* IPv4 if you want IPv6, subsituite with AF_INET6 */
@@ -144,10 +143,6 @@ int networkTcpServer(char *err, const char *port, char *bindaddr)
         close(fd);
         return NETWORK_ERR;
     }
-
-    // readAddr(res->ai_addr, ipclient);
-    // printf("the listen addres is %s\n",ipclient);
-    // freeaddrinfo(res);
 
     return fd;
 }
