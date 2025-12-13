@@ -6,9 +6,11 @@
 #include <stdarg.h>
 #include <stdlib.h>
 
+
 #include "request.h"
 #include "network.h"
 #include "data-struct/linkedList.h"
+#include "malloc-utils/malloc_utils.h"
 
 /* Error Codes */
 #define ERR  -1
@@ -18,8 +20,10 @@
 #define WARNIG 2
 #define NOTICE 1
 #define DEBBUG 0
+
 /* Server Configuration */
 #define SERVER_PORT "6700"
+#define BUFFER_SIZE 1000
 
 
 /*========================================== Data Tipes ========================================= */
@@ -31,10 +35,16 @@ struct httpServer{
     list *freeObjctList;
 };
 
+typedef struct contextClient{
+    int fd;
+    char *clientAddr;
+    const struct httpServer *serverConfig;
+    char readBuffer[BUFFER_SIZE];
+    size_t bytesRead;
+}contextClient;
 
 /* ========================================== Global Vars ====================================== */
 static struct httpServer server;
-
 
 /* ========================================= Utility Function ================================= */
 /* This function is wrap some out of memory error */
@@ -81,6 +91,16 @@ static void initServer()
     serverLogs(NOTICE, "Server Started " );
 }
 
+static int createClient(int cfd, char *ip)
+{
+    contextClient *c = safeMalloc(sizeof(*c));
+    c->fd = cfd;
+    c->clientAddr = ip;
+    c->serverConfig = &server;
+    c->bytesRead = 0;
+    return OK;
+}
+
 static void acceptHandler(int fd)
 {
     int cport, cfd;
@@ -92,7 +112,11 @@ static void acceptHandler(int fd)
         return;
     }
     serverLogs(DEBBUG, "Accepted  %s:%d ", cip, cport);
-
+    if (createClient(cfd, cip) == ERR) {
+        serverLogs(WARNIG, "Error creating the resource for the client");
+        close(cfd);  /* Close the file descriptor */
+        return;
+    }
 }
 
 int main(void){
