@@ -14,14 +14,14 @@ typedef enum{
 
 /* Possible value */
 typedef union{
-    int *intval;
+    int intval;
     char *strval;
 }keydata;
 
 /* Defined type */
 typedef struct{
     keytype type;
-    keydata *data;
+    keydata data;
 }generickey;
 
 typedef struct entry{

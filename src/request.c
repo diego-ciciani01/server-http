@@ -1,8 +1,9 @@
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
 
 #include "request.h"
-
+#include "malloc-utils/malloc_utils.h"
 /* Method to copy the pointed value in the new pointer*/
 void copyString(char *str1, char *str2)
 {
@@ -49,112 +50,132 @@ int choseHttpMethod(char *method)
 }
 
 /* Extract the header field data */
-void extractHeaderFields(httpRequest *httpRequest, char *headerFild)
+void extractHeaderFields(httpRequest *httpRequest, char *headerField)
 {
-    char fields[strLen(headerFild)], *field, *header, *key, *value;
-    queue *headers;
-    dict *headerdict;
+if (headerField == NULL || strlen(headerField) == 0) return;
 
-    copyString(headerFild, fields);
+    dict *headerdict = createDictionary(20);
 
-    headers = createQueue();
-    field = strtok(fields, "\n");
-    while(field){
-        headers->push(headers, field);
-        field = strtok(NULL, "\n");
-    }
-    headerdict = createDictionary(10);
+    char *fields_copy = strdup(headerField);
+    if (!fields_copy) return;
 
-    do{
-        header = (char*)headers->peak(headers);
+    char *saveptr_line;
+    char *line = strtok_r(fields_copy, "\n", &saveptr_line);
 
-        key = strtok(header, ":");
-        value = strtok(NULL, "\n");
-        /*remove some space */
-        if(value){
-            if (value[0] == ' ') value++;
-            addItem(headerdict, key, value, TYPE_STRING);
+    while (line) {
+        char *r_ptr = strchr(line, '\r');
+        if (r_ptr) *r_ptr = '\0';
+
+        char *colon = strchr(line, ':');
+
+        if (colon) {
+            *colon = '\0';
+
+            char *key = line;
+            char *value = colon + 1;
+
+            while (*value == ' ') {
+                value++;
+            }
+
+            if (strlen(key) > 0) {
+                addItem(headerdict, key, value, TYPE_STRING);
+            }
         }
-            headers->pop(headers);
+        line = strtok_r(NULL, "\n", &saveptr_line);
+    }
 
-    }while(header);
-
-    queueDestruction(headers);
-}
+    httpRequest->headerfields = headerdict;
+    free(fields_copy);}
 
 /* Extracrt the body fild, but only if the Content-Type key is presente on the dict */
 void extractBodyField(httpRequest *httpRequest, char *bodyField)
 {
-    char *bodydata, *key, *value, *field, *bodytype;
-    dict *bodydict;
-    queue *qbody;
+    if (bodyField == NULL || strlen(bodyField) == 0) return;
 
-    if ((bodytype =searchKey(httpRequest->headerfields, "Content-Type"))){
-        bodydict = createDictionary(10);
-        if (strcmp(bodytype, "application/x-www-form-urlencoded") == 0){
-            qbody = createQueue();
-            /* Extract all the key - value from body and push on the queue */
-            field = strtok(bodyField, "&");
-            while(field){
-                qbody->push(qbody, field);
-                field = strtok(NULL, "&");
+    char *bodytype = searchKey(httpRequest->headerfields, "Content-Type");
+    if(bodytype == NULL) return;
+
+    dict *bodydict = createDictionary(10);
+
+    if (strcmp(bodytype, "application/x-www-form-urlencoded") == 0){
+        char *body_copy = strdup(bodyField);
+        char *saveptr_pair;
+
+        char *pair = strtok_r(body_copy, "&", &saveptr_pair);
+
+        while(pair) {
+            char *eq = strchr(pair, '=');
+            if (eq) {
+                *eq = '\0';
+                char *key = pair;
+                char *value = eq + 1;
+                addItem(bodydict, key, value, TYPE_STRING);
             }
-            do{
-                bodydata = qbody->peak(qbody);
-                key = strtok(bodydata, "=");
-                value = strtok(NULL, "\0");
-
-                if(value) addItem(bodydict, key, value, TYPE_STRING);
-                qbody->pop(qbody);
-                bodydata = qbody->peak(qbody);
-            }while(bodydata);
-            queueDestruction(qbody);
-        }else{
-            addItem(bodydict, "all_data", bodyField, TYPE_STRING);
-
+            pair = strtok_r(NULL, "&", &saveptr_pair);
         }
-        httpRequest->body = bodydict;
+        free(body_copy);
+    } else {
+        addItem(bodydict, "all_data", bodyField, TYPE_STRING);
     }
+
+    httpRequest->body = bodydict;
+
 }
 
 void extractRequestLine( httpRequest *httpRequest, char *requestLine)
 {
-    char field[strLen(requestLine)];
-    copyString(requestLine, field);
+    if(requestLine == NULL || strlen(requestLine) < 0) return;
+    char *field = strdup(requestLine);
+    if(field == NULL) return;
 
     char *method = strtok(field, " ");
     char *URI = strtok(NULL, " ");
     char *httpVersion = strtok(NULL, " ");
     dict *request =  createDictionary(10);
+
+    if(method == NULL || httpVersion == NULL || httpVersion == NULL){
+        free(field);
+        return;
+    }
     addItem(request, "method", method, TYPE_STRING);
     addItem(request, "URI", URI, TYPE_STRING);
-    addItem(request, "version", httpVersion, TYPE_STRING);
+    addItem(request, "version",httpVersion, TYPE_STRING);
 
     httpRequest->requestline = request;
+
+    free(field);
 }
 
 /*  In this fanction we want to find the location in with the body part of the request begin.
  *  Finding the excape character, '\n'
  * */
-httpRequest *httpRequestConstructo(char *requestString)
+httpRequest *httpRequestConstructor(char *requestString)
 {
-    httpRequest *myrequest = NULL;
-    char myrequeststr[strLen(requestString)];
+    httpRequest *myrequest = safeMalloc(sizeof(httpRequest));
+    myrequest->requestline = NULL;
+    myrequest->headerfields = NULL;
+    myrequest->body = NULL;
 
-    copyString(requestString, myrequeststr);
+    char *myrequeststr = strdup(requestString);
+    if(myrequeststr == NULL) return NULL;
+    size_t len = strlen(myrequeststr);
+    if(len > 2){
+        for (int i =0; i<(len-2); i++) {
+            if (myrequeststr[i] == '\n' && myrequeststr[i+1] == '\n')
+                myrequeststr[i+1] = '|';
+        }
+    }
 
-    for (int i =0; i<(strLen(myrequeststr)-2); i++) {
-        if (myrequeststr[i] == '\n' && myrequeststr[i+1] == '\n')
-            myrequeststr[i+1] = '|';
-    }
-    /* Extract the main part from the request */
-    char *requestline =  strtok(myrequeststr, "\n");
-    char *headerfilds = strtok(NULL, "|");
-    char *body = strtok(NULL, "|");
+    /* Extract the main part from the request */
+    char *requestline =  strtok(myrequeststr, "\n");
+    char *headerfields = strtok(NULL, "|");
+    char *body = strtok(NULL, "|");
 
-    extractRequestLine(myrequest, requestline);
-    extractHeaderFields(myrequest, headerfilds);
-    extractBodyField(myrequest, body);
-    return myrequest;
+    if(requestline)extractRequestLine(myrequest, requestline);
+    if(headerfields)extractHeaderFields(myrequest, headerfields);
+    if(body)extractBodyField(myrequest, body);
+
+    free(myrequeststr);
+    return myrequest;
 }
-

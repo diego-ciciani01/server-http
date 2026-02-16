@@ -95,6 +95,7 @@ void listReleaseIterator(listIter *iter)
  * 2) when it's a head or tail*/
 void listDelNode(list *list, listNode *node)
 {
+    if(node == NULL || list == NULL) return;
     /* In case exist the prev node*/
     if (node->prev)
         node->prev->next = node->next;

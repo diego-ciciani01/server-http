@@ -6,7 +6,6 @@
 #include <stdarg.h>
 #include <stdlib.h>
 
-
 #include "request.h"
 #include "network.h"
 #include "data-struct/linkedList.h"
@@ -17,14 +16,13 @@
 #define OK 0
 
 /* Logs level */
-#define WARNIG 2
+#define WARNING 2
 #define NOTICE 1
-#define DEBBUG 0
+#define DEBUG 0
 
 /* Server Configuration */
 #define SERVER_PORT "6700"
 #define BUFFER_SIZE 1000
-
 
 /*========================================== Data Tipes ========================================= */
 struct httpServer{
@@ -47,7 +45,7 @@ typedef struct contextClient{
 static struct httpServer server;
 
 /* ========================================= Utility Function ================================= */
-/* This function is wrap some out of memory error */
+/* This function is wrap for some out of memory error */
 static void oom(const char *msg)
 {
     fprintf(stderr, "%s: out of memory\n", msg);
@@ -56,6 +54,7 @@ static void oom(const char *msg)
     abort();
 }
 
+/* Here function for a dynamic number of argumets to pass for the function */
 static void serverLogs( int level,  const char *fmt, ...)
 {
     va_list ap;
@@ -85,17 +84,44 @@ static void initServer()
 
     server.fd  = networkTcpServer(server.neterr, server.port, NULL );
     if (server.fd == ERR) {
-        serverLogs(WARNIG, "Opening TCP port: %s", server.neterr);
+        serverLogs(WARNING, "Opening TCP port: %s", server.neterr);
         exit(1);
     }
     serverLogs(NOTICE, "Server Started " );
 }
-
-static int createClient(int cfd, char *ip)
+/* Process client function, to get the client and reply a response */
+static void processClient(contextClient *c)
 {
-    contextClient *c = safeMalloc(sizeof(*c));
+    int nbyte = networkRecv(server.neterr, c->fd, c->readBuffer, BUFFER_SIZE-1);
+    httpRequest *req = NULL;
+    if(nbyte < 0){
+        serverLogs(WARNING, "Number read byte 0", server.neterr);
+        return;
+    }
+
+    c->readBuffer[nbyte] = '\0';
+    c->bytesRead = nbyte;
+   if((req = httpRequestConstructor(c->readBuffer)) == NULL){
+       serverLogs(WARNING, "Error parsing the http request");
+   }
+   else{
+       char *method = (char*)searchKey(req->requestline, "method");
+       char *uri = (char*)searchKey(req->requestline, "URI");
+
+       char *response = "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: 12\r\n\r\nHello World!";
+       networkSend(server.neterr, c->fd, response, strlen(response));
+    }
+
+    close(c->fd);
+
+}
+
+static int createClient(int cfd, char *ip, contextClient *c)
+{
     c->fd = cfd;
-    c->clientAddr = ip;
+    c->clientAddr = strdup(ip);
+    if (c->clientAddr == NULL) return ERR;
+
     c->serverConfig = &server;
     c->bytesRead = 0;
     return OK;
@@ -105,18 +131,22 @@ static void acceptHandler(int fd)
 {
     int cport, cfd;
     char cip[128];
+    contextClient *c = safeMalloc(sizeof(*c));
 
     cfd = networkAccept(server.neterr, fd, cip, &cport);
     if (cfd == ERR) {
-        serverLogs(DEBBUG, "Accepting client connection: %s ", server.neterr);
+        serverLogs(DEBUG, "Accepting client connection: %s ", server.neterr);
         return;
     }
-    serverLogs(DEBBUG, "Accepted  %s:%d ", cip, cport);
-    if (createClient(cfd, cip) == ERR) {
-        serverLogs(WARNIG, "Error creating the resource for the client");
+    serverLogs(DEBUG, "Accepted  %s:%d \n", cip, cport);
+    if (createClient(cfd, cip, c) == ERR) {
+        serverLogs(WARNING, "Error creating the resource for the client");
         close(cfd);  /* Close the file descriptor */
         return;
     }
+    /* Start the process */
+    processClient(c);
+
 }
 
 int main(void){

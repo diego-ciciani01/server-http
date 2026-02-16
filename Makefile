@@ -2,6 +2,7 @@ CC = gcc
 PROGNAME = server-http
 CFLAGS = -Wall -g -I./src
 CFLAGS_TEST = -Wall -g -I./test
+CFLAGS_BUG = -g -fsanitize=address
 SRC_DIR = src
 OBJ_DIR = build
 TEST_DIR = test
@@ -21,13 +22,24 @@ linkedList.o: $(SRC_DIR)/data-struct/linkedList.c $(SRC_DIR)/data-struct/linkedL
 malloc_utils.o: $(SRC_DIR)/malloc-utils/malloc_utils.c $(SRC_DIR)/malloc-utils/malloc_utils.h
 dictionary.o: $(SRC_DIR)/data-struct/dictionary.c $(SRC_DIR)/data-struct/dictionary.h $(SRC_DIR)/data-struc ../malloc-utils/malloc_utils.h
 
+help:
+	@echo
+	@echo "Build commands"
+	@echo
+	@echo "make all         	build all parts"
+	@echo "make networking      build just networking stuf"
+	@echo "make dep             to generate all dependency of the of libreries"
+	@echo "make test            to generate tests"
+	@echo
+	@echo "make clean           remove all targers"
+
 all: server-http
 
 server-http: $(OBJ)
 	$(CC) $(CFLAGS) -o	$(PROGNAME) $(OBJ)
 
 dep:
-	@echo "dependecy generacio"
+	@echo "dependecy generation"
 	$(CC) -MM  $(C_FIND)
 
 clean:
@@ -35,3 +47,8 @@ clean:
 
 test:
 	$(CC) $(CFLAGS_TEST) -o test $(test.o)
+
+bug-compile:
+	$(CC) $(CFLAGS_BUG) -o $(PROGNAME) $(OBJ)
+
+
