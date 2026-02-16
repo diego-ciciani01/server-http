@@ -3,7 +3,7 @@
 #include <stdlib.h>
 
 #include "request.h"
-
+#include "malloc-utils/malloc_utils.h"
 /* Method to copy the pointed value in the new pointer*/
 void copyString(char *str1, char *str2)
 {
@@ -129,7 +129,6 @@ void extractRequestLine( httpRequest *httpRequest, char *requestLine)
     char *field = strdup(requestLine);
     if(field == NULL) return;
 
-    printf("field: \n %s\n", requestLine);
     char *method = strtok(field, " ");
     char *URI = strtok(NULL, " ");
     char *httpVersion = strtok(NULL, " ");
@@ -153,22 +152,30 @@ void extractRequestLine( httpRequest *httpRequest, char *requestLine)
  * */
 httpRequest *httpRequestConstructor(char *requestString)
 {
-    httpRequest *myrequest = NULL;
-    char *myrequeststr;
-    myrequeststr = strdup(requestString);
+    httpRequest *myrequest = safeMalloc(sizeof(httpRequest));
+    myrequest->requestline = NULL;
+    myrequest->headerfields = NULL;
+    myrequest->body = NULL;
 
-    for (int i =0; i<(strlen(myrequeststr)-2); i++) {
-        if (myrequeststr[i] == '\n' && myrequeststr[i+1] == '\n')
-            myrequeststr[i+1] = '|';
-    }
-    /* Extract the main part from the request */
-    char *requestline =  strtok(myrequeststr, "\n");
-    char *headerfields = strtok(NULL, "|");
-    char *body = strtok(NULL, "|");
+    char *myrequeststr = strdup(requestString);
+    if(myrequeststr == NULL) return NULL;
+    size_t len = strlen(myrequeststr);
+    if(len > 2){
+        for (int i =0; i<(len-2); i++) {
+            if (myrequeststr[i] == '\n' && myrequeststr[i+1] == '\n')
+                myrequeststr[i+1] = '|';
+        }
+    }
 
-    extractRequestLine(myrequest, requestline);
-    extractHeaderFields(myrequest, headerfields);
-    extractBodyField(myrequest, body);
-    return myrequest;
+    /* Extract the main part from the request */
+    char *requestline =  strtok(myrequeststr, "\n");
+    char *headerfields = strtok(NULL, "|");
+    char *body = strtok(NULL, "|");
+
+    if(requestline)extractRequestLine(myrequest, requestline);
+    if(headerfields)extractHeaderFields(myrequest, headerfields);
+    if(body)extractBodyField(myrequest, body);
+
+    free(myrequeststr);
+    return myrequest;
 }
-
