@@ -10,9 +10,11 @@
 uint64_t fnv1Hash(const unsigned char *data, size_t len)
 {
     uint64_t hash = 14695981039346656037UL;
-    for(size_t i =0; i<len; i++){
-        hash ^= (uint64_t)data[i];
-        hash *= 1099511628211UL;
+    uint64_t prime = 1099511628211UL;
+
+    for(size_t i = 0; i < len; i++) {
+       hash ^= (uint64_t)data[i];
+       hash *= prime;
     }
     return hash;
 }
@@ -22,9 +24,13 @@ uint64_t genericHashFunction(dict *dict, generickey *key)
 {
     switch(key->type){
         case TYPE_INT:
-            return fnv1Hash((const unsigned char *)key->data->intval, sizeof(key->data->intval));
+            return fnv1Hash((const unsigned char *)&key->data.intval, sizeof(key->data.intval));
         case TYPE_STRING:
-            return fnv1Hash((const unsigned char *)key->data->strval, sizeof(key->data->strval));
+            if(key->data.strval == NULL){
+                fprintf(stderr, "ERROR: invalid string value\n");
+                return 0;
+            }
+            return fnv1Hash((const unsigned char *)key->data.strval, strlen(key->data.strval));
         default:
             return 0;
     }
@@ -37,9 +43,9 @@ unsigned short compareGenericKey(const generickey *key1, const generickey *key2)
 
     switch(key1->type){
         case TYPE_INT:
-            return (key1->data->intval == key2->data->intval);
+            return (key1->data.intval == key2->data.intval);
         case TYPE_STRING:
-            return (strcmp(key1->data->strval, key2->data->strval) == 0);
+            return (strcmp(key1->data.strval, key2->data.strval) == 0);
         default:
             return NOT_EQUAL;
     }
@@ -55,33 +61,48 @@ void addItem(dict *dict, void *key, void *value, short TYPE)
 
     if (TYPE == TYPE_STRING){
         generickey->type = TYPE_STRING;
-        generickey->data->strval = (char*)key;
+        generickey->data.strval = strdup((char*)key);
+        //strcpy( generickey->data.strval, (char*)key);
     }
     else if (TYPE == TYPE_INT){
         generickey->type = TYPE_INT;
-        generickey->data->intval = (int*)key;
+        generickey->data.intval = *(int *)key;
     }
     else{
         printf("not data supported\n");
+        free(generickey);
         return;
     }
-    uint64_t hashposition = genericHashFunction(dict, generickey);
+    uint64_t hashposition = genericHashFunction(dict, generickey) % dict->len;
     myentry = dict->bucket[hashposition];
-
     while (myentry != NULL){
         if (compareGenericKey(myentry->key, generickey)) {
-            free(myentry->data);
-            myentry->data = value;
+            if (TYPE == TYPE_STRING && myentry->data != NULL) {
+                free(myentry->data);
+            }
+            if (TYPE == TYPE_STRING) {
+                myentry->data = strdup((char*)value);
+            } else {
+                myentry->data = value;
+            }
+
+            if (TYPE == TYPE_STRING) free(generickey->data.strval);
+            free(generickey);
             return;
         }
         myentry = myentry->next;
     }
-    node        = safeMalloc(sizeof(*node));
-    node->data  = value;
+    node = safeMalloc(sizeof(*node));
+
+    if (TYPE == TYPE_STRING) {
+        node->data = strdup((char*)value);
+    } else {
+        node->data = value;
+    }
+
     node->key   = generickey;
-    node->next  = myentry;
-    myentry     = node;
-    return;
+    node->next  = dict->bucket[hashposition];
+    dict->bucket[hashposition] = node;
 }
 
 dict *createDictionary(size_t size)
@@ -89,7 +110,8 @@ dict *createDictionary(size_t size)
     dict *dict = safeMalloc(sizeof(*dict));
     dict->count = 0;
     dict->len = size;
-    dict->bucket = safeMalloc(sizeof(dict->bucket) *size);
+
+    dict->bucket = calloc(size, sizeof(entry*));
 
     return dict;
 }
@@ -105,17 +127,17 @@ void deleteItem(dict *dict, void *key, short TYPE)
 
     if (TYPE == TYPE_STRING){
         generickey->type = TYPE_STRING;
-        generickey->data->strval = (char*)key;
+        generickey->data.strval = (char*)key;
     }
     else if (TYPE == TYPE_INT){
         generickey->type = TYPE_INT;
-        generickey->data->intval = (int*)key;
+        generickey->data.intval = *(int*)key;
     }
     else{
         printf("not data supported\n");
         return;
     }
-    uint64_t index = genericHashFunction(dict, key);
+    uint64_t index = genericHashFunction(dict, key) % dict->len;
     node = dict->bucket[index];
 
     while (node != NULL) {
@@ -161,22 +183,25 @@ void destoyDict(dict *dict)
 
 void *searchKey(dict *dict, void *key)
 {
-    entry *wrapkey, *node;
-    wrapkey = safeMalloc(sizeof(wrapkey));
+if (dict == NULL || key == NULL) return NULL;
 
-    uint64_t index = fnv1Hash((const unsigned char *) key, sizeof(key));
-    node = dict->bucket[index];
-    wrapkey->key->data->strval = (char *)key;
-    wrapkey->key->type = TYPE_STRING;
+    size_t key_len = strlen((char*)key);
+    uint64_t index = fnv1Hash((const unsigned char *)key, key_len) % dict->len;
 
-    while (node != NULL){
-        if (compareGenericKey(node->key, wrapkey->key))
+    entry *node = dict->bucket[index];
+
+    generickey *temp_key = safeMalloc(sizeof(*temp_key));
+    temp_key->type = TYPE_STRING;
+    temp_key->data.strval = (char *)key;
+
+    while (node != NULL) {
+        if (compareGenericKey(node->key, temp_key)) {
+            free(temp_key);
             return node->data;
-        else{
-            printf("key not found\n");
-            return NULL;
         }
         node = node->next;
     }
+
+    free(temp_key);
     return NULL;
 }

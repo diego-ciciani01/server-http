@@ -13,7 +13,7 @@
 #include "network.h"
 
 /* Utility to wrap the error */
-static void networkSetError(char *err, const char *fmt, ...)
+static inline void networkSetError(char *err, const char *fmt, ...)
 {
     va_list ap;
 
@@ -56,7 +56,7 @@ int networkAccept(char *err, int sockfd, char *ip, int *port)
     }
     if (ip) readAddr((struct sockaddr*)&their_addr, ip);
     /* with htohs is possible to tonver the port number for the correct value in respet to the endianess */
-    if (port == NULL){
+    if (port != NULL){
         /* case of IPv4 */
         if (their_addr.ss_family == AF_INET){
             struct sockaddr_in *s =  (struct sockaddr_in *)&their_addr;

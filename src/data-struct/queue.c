@@ -14,12 +14,13 @@ void* peakOnQueue(queue *q)
 
 void popOnQueue(queue *q)
 {
+    if(q == NULL || q->list == NULL || q->list->len == 0) return;
     listDelOnIndex(q->list, 0);
 }
 
 queue *createQueue(void)
 {
-    queue *q = safeMalloc(sizeof(q));
+    queue *q = safeMalloc(sizeof(queue));
     q->list =  inizializeLinkedList();
     q->peak = peakOnQueue;
     q->push = pushOnQueue;

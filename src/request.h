@@ -27,7 +27,7 @@ typedef struct
 
 }httpRequest;
 
-httpRequest *httpRequestConstructo(char *requestString);
+httpRequest *httpRequestConstructor(char *requestString);
 void copyString(char *str1, char *str2);
 int strLen(char *str);
 int choseHttpMethod(char *method);
